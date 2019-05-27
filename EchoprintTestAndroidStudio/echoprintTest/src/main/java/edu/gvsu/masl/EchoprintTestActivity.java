@@ -29,11 +29,16 @@ package edu.gvsu.masl;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.lang.ref.WeakReference;
+import java.util.Calendar;
 import java.util.Hashtable;
 
 import edu.gvsu.masl.echoprint.AudioFingerprinter;
@@ -49,7 +54,13 @@ import edu.gvsu.masl.echoprint.AudioFingerprinter.AudioFingerprinterListener;
 public class EchoprintTestActivity extends Activity implements AudioFingerprinterListener 
 {	
 	boolean recording, resolved;
-	AudioFingerprinter fingerprinter;
+	public static boolean isWatching = false;
+	public static boolean isRecording = false;
+	public static int intDelayMillis = 200;
+
+	private static final String TAG = EchoprintTestActivity.class.getSimpleName();
+
+	private static AudioFingerprinter fingerprinter;
 	TextView status;
 	ImageButton btn;
 
@@ -69,8 +80,12 @@ public class EchoprintTestActivity extends Activity implements AudioFingerprinte
     {    	
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        
-        btn = (ImageButton) findViewById(R.id.recordButton);
+
+		if(fingerprinter == null)
+			fingerprinter = new AudioFingerprinter(EchoprintTestActivity.this);//
+
+
+		btn = (ImageButton) findViewById(R.id.recordButton);
         
         status = (TextView) findViewById(R.id.status);
         btn.setOnClickListener(new View.OnClickListener() 
@@ -78,17 +93,25 @@ public class EchoprintTestActivity extends Activity implements AudioFingerprinte
             public void onClick(View v) 
             {
                 // Perform action on click
-            	if(recording)
-            	{            		 
-        			fingerprinter.stop();        			
-            	}
+				if(!isWatching) {
+					isWatching = true;
+					watching();
+				} else {
+					isWatching = false;
+				}
+
+            	/*if(recording) {
+					fingerprinter.stop();
+
+				}
             	else
-            	{            		
-            		if(fingerprinter == null)
+            	{
+					if(fingerprinter == null)
             			fingerprinter = new AudioFingerprinter(EchoprintTestActivity.this);
-            		
+
+		btn_list=(ImageView)findVi
             		fingerprinter.fingerprint(15);
-            	}
+            	}*/
             }
         });
 
@@ -96,7 +119,6 @@ public class EchoprintTestActivity extends Activity implements AudioFingerprinte
 		/*
 			@uthor: Mehul
 		 */
-
 		btn_list=(ImageView)findViewById(R.id.buttonAdd);
 		btn_list.setOnClickListener(new View.OnClickListener()
 		{
@@ -126,6 +148,55 @@ public class EchoprintTestActivity extends Activity implements AudioFingerprinte
 		});
     }
 
+	private static class MyHandler extends Handler {}
+	private final MyHandler mHandler = new MyHandler();
+
+	public static class MyRunnable implements Runnable {
+		private final WeakReference<Activity> mActivity;
+
+		public MyRunnable(Activity activity) {
+			mActivity = new WeakReference<Activity>(activity);
+		}
+
+		@Override
+		public void run() {
+
+			Activity activity = mActivity.get();
+
+			Calendar rightNow = Calendar.getInstance();
+			if (activity != null) {
+				if(isRecording) {
+					fingerprinter.stop();
+					Log.v(TAG, rightNow.getTimeInMillis() + " stopRecording");
+					isRecording = false;
+					intDelayMillis = 2000;
+				} else {
+
+					//if(fingerprinter == null)
+					//	fingerprinter = new AudioFingerprinter(activity);//EchoprintTestActivity.this
+
+					fingerprinter.fingerprint(15);
+					Log.v(TAG,  rightNow.getTimeInMillis() + " startRecording");
+					isRecording = true;
+					intDelayMillis = 20000;
+				}
+
+				if(isWatching) {
+					MyHandler mHandler = new MyHandler();
+					mHandler.postDelayed(this, intDelayMillis);
+				} else {
+					fingerprinter.stop();
+					Log.v(TAG,  rightNow.getTimeInMillis() + " stopRecording");
+				}
+			}
+		}
+	}
+
+	private void watching() {
+		mHandler.postDelayed(mRunnable, intDelayMillis);
+	}
+
+	private MyRunnable mRunnable = new MyRunnable(this);
 
 	public void didFinishListening() 
 	{					

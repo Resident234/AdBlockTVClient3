@@ -75,6 +75,8 @@ public class AudioFingerprinter implements Runnable
 	
 	private Thread thread;
 	private volatile boolean isRunning = false;
+	private volatile boolean isWatching = false;
+
 	AudioRecord mRecordInstance = null;
 	
 	private short audioData[];
@@ -123,6 +125,8 @@ public class AudioFingerprinter implements Runnable
 	 */
 	public void fingerprint(int seconds, boolean continuous)
 	{
+		Log.v("Fingerprinter", "isRunning " + this.isRunning);
+
 		if(this.isRunning)
 			return;
 				
@@ -130,7 +134,7 @@ public class AudioFingerprinter implements Runnable
 		
 		// cap to 30 seconds max, 10 seconds min.
 		this.secondsToRecord = Math.max(Math.min(seconds, 30), 10);
-		
+
 		// start the recording thread
 		thread = new Thread(this);
 		thread.start();
@@ -152,17 +156,20 @@ public class AudioFingerprinter implements Runnable
 	 */
 	public void run() 
 	{
+		Log.i("Fingerprinter", "run");
 		this.isRunning = true;
 		try 
 		{			
 			// create the audio buffer
 			// get the minimum buffer size
 			int minBufferSize = AudioRecord.getMinBufferSize(FREQUENCY, CHANNEL, ENCODING);
-			
+			Log.v("Fingerprinter", "minBufferSize: " + minBufferSize);
+
 			// and the actual buffer size for the audio to record
 			// frequency * seconds to record.
 			bufferSize = Math.max(minBufferSize, this.FREQUENCY * this.secondsToRecord);
-						
+			Log.v("Fingerprinter", "bufferSize: " + bufferSize);
+
 			audioData = new short[bufferSize];
 						
 			// start recorder
@@ -215,8 +222,11 @@ public class AudioFingerprinter implements Runnable
 	    			
 	    			// fetch data from echonest
 	    			time = System.currentTimeMillis();
-	    			
-					String urlstr = SERVER_URL + code;			
+
+					Log.d("Fingerprinter", "Code: " + code);
+					Log.v("Fingerprinter", "Sending hash");
+
+					/*String urlstr = SERVER_URL + code;
 					HttpClient client = new DefaultHttpClient();
 	    			HttpGet get = new HttpGet(urlstr);
 	    			
@@ -270,7 +280,7 @@ public class AudioFingerprinter implements Runnable
 					}
 					else {
 						didFailWithException(new Exception("result JSON parsing error"));
-					}
+					}*/
 
 					// Old parsing code for Echonest API.
 					/*
@@ -337,6 +347,7 @@ public class AudioFingerprinter implements Runnable
 			mRecordInstance.stop();
 			mRecordInstance.release();
 			mRecordInstance = null;
+			Log.v("Fingerprinter", "Record stopped");
 		}
 		this.isRunning = false;
 		
