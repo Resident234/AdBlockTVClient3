@@ -1,5 +1,8 @@
 # Android Echoprint
 
+If you get an error "Could not find com.android.tools.build:aapt2:3.3.1" when building a project, then see the solution [here](https://blog.csdn.net/Builder_Taoge/article/details/88736485)
+
+
 ## Code from the MASL blog post available [here](http://masl.cis.gvsu.edu/2012/01/25/android-echoprint/)
 
 [Echoprint](http://echoprint.me) is an open source library to fingerprint Audio, in this repo you'll find the code needed to make it run under Android.
