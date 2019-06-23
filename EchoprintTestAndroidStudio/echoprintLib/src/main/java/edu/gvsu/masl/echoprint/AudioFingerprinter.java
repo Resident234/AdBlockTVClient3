@@ -67,7 +67,8 @@ public class AudioFingerprinter implements Runnable
 
 	// Instead now using the MooMash API (http://www.mooma.sh/api.html).
 	// Remember to request an API key from MooMash through the website and replace it in the url below.
-	private final String SERVER_URL = "http://api.mooma.sh/v1/song/identify?api_key=YOURMOOMASHAPIKEYHERE&code=";
+	//private final String SERVER_URL = "http://api.mooma.sh/v1/song/identify?api_key=YOURMOOMASHAPIKEYHERE&code=";
+    private final String SERVER_URL = "http://188.168.134.153:5000/?&code=";
 
 	private final int FREQUENCY = 11025;
 	private final int CHANNEL = AudioFormat.CHANNEL_IN_MONO;
@@ -226,35 +227,36 @@ public class AudioFingerprinter implements Runnable
 					Log.d("Fingerprinter", "Code: " + code);
 					Log.v("Fingerprinter", "Sending hash");
 
-					/*String urlstr = SERVER_URL + code;
+					String urlstr = SERVER_URL + code;
 					HttpClient client = new DefaultHttpClient();
 	    			HttpGet get = new HttpGet(urlstr);
 	    			
 	    			// get response
 	    			HttpResponse response = client.execute(get);                
 	    			// Examine the response status
-	    	        Log.d("Fingerprinter",response.getStatusLine().toString());
-	
+                    Log.d("Fingerprinter", response.getStatusLine().toString());
+
+
 	    	        // Get hold of the response entity
 	    	        HttpEntity entity = response.getEntity();
 	    	        // If the response does not enclose an entity, there is no need
 	    	        // to worry about connection release
-	
-	    	        String result = "";
-	    	        if (entity != null) 
-	    	        {
-	    	            // A Simple JSON Response Read
-	    	            InputStream instream = entity.getContent();
-	    	            result= convertStreamToString(instream);
-	    	            // now you have the string representation of the HTML request
-	    	            instream.close();
-	    	        }
+
+					String result = "";
+					if (entity != null) {
+						// A Simple JSON Response Read
+						InputStream instream = entity.getContent();
+						result = convertStreamToString(instream);
+						// now you have the string representation of the HTML request
+						instream.close();
+					}
 	     			Log.d("Fingerprinter", "Results fetched in: " + (System.currentTimeMillis() - time) + " millis");
 
 					// On successful recognition the MooMash API returns a JSON structure such as:
 					// {"response":{"songs":[{"artist_id":"","artist_name":"P!nk","id":"","score":54,"title":"Don't Let Me Get Me","message":"OK"}],"status":{"version":"1.0","message":"Success","code":0}}}
 					Log.v("AudioFingerprinter", "run - result: " + result);
 
+					/*
 	    			// parse JSON
 		    		JSONObject jobj = new JSONObject(result);
 
