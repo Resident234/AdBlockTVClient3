@@ -36,7 +36,13 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -45,6 +51,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Main fingerprinting class<br>
@@ -68,7 +76,7 @@ public class AudioFingerprinter implements Runnable
 	// Instead now using the MooMash API (http://www.mooma.sh/api.html).
 	// Remember to request an API key from MooMash through the website and replace it in the url below.
 	//private final String SERVER_URL = "http://api.mooma.sh/v1/song/identify?api_key=YOURMOOMASHAPIKEYHERE&code=";
-    private final String SERVER_URL = "http://188.168.134.153:5000/?&code=";
+    private final String SERVER_URL = "http://188.168.134.153:5000/api";
 
 	private final int FREQUENCY = 11025;
 	private final int CHANNEL = AudioFormat.CHANNEL_IN_MONO;
@@ -227,12 +235,50 @@ public class AudioFingerprinter implements Runnable
 					Log.d("Fingerprinter", "Code: " + code);
 					Log.v("Fingerprinter", "Sending hash");
 
-					String urlstr = SERVER_URL + code;
+					JSONObject json = null;
+					json = new JSONObject();
+					json.put("code", code);
+
+					//HttpClient client = new DefaultHttpClient();
+					//HttpPost httppost = new HttpPost(url);
+					/*CommunicationResponse res = new CommunicationResponse();
+
+					try {
+						StringEntity se = new StringEntity(json.toString());
+						httppost.setEntity(se);
+						httppost.setHeader("Content-type", "application/json");
+						HttpResponse response = client.execute(httppost);
+						res = handleResponse(response);
+
+					} catch (UnsupportedEncodingException e) {
+						res.success = false;
+						res.msgError = "Error UnsupportedEncodingException: " + e.getMessage();
+						Log.e(TAG, res.toString());
+					} catch (ClientProtocolException e) {
+						res.success = false;
+						res.msgError = "Error ClientProtocolException: " + e.getMessage();
+						Log.e(TAG, res.toString());
+					} catch (IOException e) {
+						res.success = false;
+						res.msgError = "Error IOException: " + e.getMessage();
+						Log.e(TAG, res.toString());
+					}*/
+
+					String urlstr = SERVER_URL;
 					HttpClient client = new DefaultHttpClient();
-	    			HttpGet get = new HttpGet(urlstr);
-	    			
+	    			HttpPost post = new HttpPost(urlstr);
+
+					// Request parameters and other properties.
+					//List<NameValuePair> params = new ArrayList<NameValuePair>(1);
+					//params.add(new BasicNameValuePair("code", code));
+					//post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+
+					StringEntity se = new StringEntity(json.toString());
+					post.setEntity(se);
+					post.setHeader("Content-type", "application/json");
+
 	    			// get response
-	    			HttpResponse response = client.execute(get);                
+	    			HttpResponse response = client.execute(post);
 	    			// Examine the response status
                     Log.d("Fingerprinter", response.getStatusLine().toString());
 
