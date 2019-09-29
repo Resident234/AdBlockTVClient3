@@ -53,6 +53,8 @@ import java.io.InputStreamReader;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.ArrayList;
+import java.net.*;
+import java.io.*;
 
 /**
  * Main fingerprinting class<br>
@@ -76,7 +78,7 @@ public class AudioFingerprinter implements Runnable
 	// Instead now using the MooMash API (http://www.mooma.sh/api.html).
 	// Remember to request an API key from MooMash through the website and replace it in the url below.
 	//private final String SERVER_URL = "http://api.mooma.sh/v1/song/identify?api_key=YOURMOOMASHAPIKEYHERE&code=";
-    private final String SERVER_URL = "http://188.168.134.153:5000/api";
+    private final String SERVER_URL = "http://192.168.0.104:5000/api";
 
 	private final int FREQUENCY = 11025;
 	private final int CHANNEL = AudioFormat.CHANNEL_IN_MONO;
@@ -216,7 +218,7 @@ public class AudioFingerprinter implements Runnable
 					
 					// create an echoprint codegen wrapper and get the code
 					time = System.currentTimeMillis();
-					Codegen codegen = new Codegen();
+					/*Codegen codegen = new Codegen();
 	    			String code = codegen.generate(audioData, samplesIn);
 	    			Log.d("Fingerprinter", "Codegen created in: " + (System.currentTimeMillis() - time) + " millis");
 	    			
@@ -234,10 +236,26 @@ public class AudioFingerprinter implements Runnable
 
 					Log.d("Fingerprinter", "Code: " + code);
 					Log.v("Fingerprinter", "Sending hash");
+                    */
+					List<String> hashes = new ArrayList<String>();
+					URL url = new URL("https://raw.githubusercontent.com/Resident234/AdBlockTVRestAPI/e3fa1676e7dcc6f6f276404c15d63712a8d9d9f6/hashes_samples.log");
+					BufferedReader read = new BufferedReader(
+							new InputStreamReader(url.openStream()));
+					String i;
+					while ((i = read.readLine()) != null) {
+						hashes.add(i);
+					}
+					read.close();
+
+					String[] simpleArray = new String[ hashes.size() ];
+					hashes.toArray( simpleArray );
+
+					String strHashes = hashes.toString();
+					//Log.d("Fingerprinter", "Hashes: " + strHashes);
 
 					JSONObject json = null;
 					json = new JSONObject();
-					json.put("code", code);
+					json.put("hashes", strHashes);
 
 					//HttpClient client = new DefaultHttpClient();
 					//HttpPost httppost = new HttpPost(url);
