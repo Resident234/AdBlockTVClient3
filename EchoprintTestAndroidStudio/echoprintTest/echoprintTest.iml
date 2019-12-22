@@ -90,5 +90,7 @@
     <orderEntry type="jdk" jdkName="Android API 22 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="echoprintLib" />
+    <orderEntry type="module" module-name="echoprintLib" />
+    <orderEntry type="module" module-name="echoprintLib" />
   </component>
 </module>

@@ -35,7 +35,14 @@ package edu.gvsu.masl.echoprint;
  */
 public class Codegen 
 {
-	private final float normalizingValue = Short.MAX_VALUE;
+
+
+    public String fingerprint(float data[], int numSamples)
+    {
+        return codegen(data, numSamples);
+    }
+
+	/*private final float normalizingValue = Short.MAX_VALUE;
 	
 	native String codegen(float data[], int numSamples);
 	
@@ -53,7 +60,7 @@ public class Codegen
 	 * @param data PCM encoded data as floats [-1, 1]
 	 * @param numSamples number of PCM samples at 11025 KHz
 	 * @return The generated fingerprint as a compressed - base64 string.
-	 */
+	 * /
 	public String generate(float data[], int numSamples)
 	{
 		return codegen(data, numSamples);
@@ -68,7 +75,7 @@ public class Codegen
 	 * @param data PCM encoded data as shorts
 	 * @param numSamples number of PCM samples at 11025 KHz
 	 * @return The generated fingerprint as a compressed - base64 string.
-	 */
+	 * /
 	public String generate(short data[], int numSamples)
 	{
 		// echoprint expects data as floats, which is the native value for 
@@ -80,5 +87,5 @@ public class Codegen
 			normalizeAudioData[i] = data[i] / normalizingValue;
 		
 		return this.codegen(normalizeAudioData, numSamples);
-	}
+	}*/
 }

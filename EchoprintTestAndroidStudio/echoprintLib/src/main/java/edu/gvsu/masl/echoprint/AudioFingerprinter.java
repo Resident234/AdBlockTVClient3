@@ -215,28 +215,43 @@ public class AudioFingerprinter implements Runnable
 					// see if the process was stopped.
 					if(mRecordInstance.getRecordingState() == AudioRecord.RECORDSTATE_STOPPED || (!firstRun && !this.continuous))
 						break;
-					
+
+					Log.d("Fingerprinter audioData", "" + audioData);
+					Log.d("Fingerprinter samplesIn", "" + samplesIn);
 					// create an echoprint codegen wrapper and get the code
 					time = System.currentTimeMillis();
-					/*Codegen codegen = new Codegen();
-	    			String code = codegen.generate(audioData, samplesIn);
+					Codegen codegen = new Codegen();
+					String code = codegen.fingerprint(samplesIn);
+
 	    			Log.d("Fingerprinter", "Codegen created in: " + (System.currentTimeMillis() - time) + " millis");
 	    			
-	    			if(code.length() == 0)
+	    			/*if(code.length() == 0)
 	    			{
 	    				// no code?
 	    				// not enough audio data?
 						continue;
-	    			}
+	    			}*/
 	    			
-	    			didGenerateFingerprintCode(code);
+	    			//didGenerateFingerprintCode(code);
 	    			
 	    			// fetch data from echonest
 	    			time = System.currentTimeMillis();
 
 					Log.d("Fingerprinter", "Code: " + code);
 					Log.v("Fingerprinter", "Sending hash");
-                    */
+
+					String strLocalMaxima;
+					URL url = new URL("https://raw.githubusercontent.com/Resident234/AdBlockTVRestAPI/e3fa1676e7dcc6f6f276404c15d63712a8d9d9f6/local_maxima.log");
+					BufferedReader read = new BufferedReader(
+							new InputStreamReader(url.openStream()));
+					String i;
+					if ((i = read.readLine()) != null) {
+						strLocalMaxima = i;
+					}
+					read.close();
+
+
+
 					List<String> hashes = new ArrayList<String>();
 					URL url = new URL("https://raw.githubusercontent.com/Resident234/AdBlockTVRestAPI/e3fa1676e7dcc6f6f276404c15d63712a8d9d9f6/hashes_samples.log");
 					BufferedReader read = new BufferedReader(
