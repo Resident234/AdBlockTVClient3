@@ -4,8 +4,8 @@
     <facet type="android-gradle" name="Android-Gradle">
       <configuration>
         <option name="GRADLE_PROJECT_PATH" value=":echoprintTest" />
-        <option name="LAST_SUCCESSFUL_SYNC_AGP_VERSION" value="3.5.0" />
-        <option name="LAST_KNOWN_AGP_VERSION" value="3.5.0" />
+        <option name="LAST_SUCCESSFUL_SYNC_AGP_VERSION" value="3.5.3" />
+        <option name="LAST_KNOWN_AGP_VERSION" value="3.5.3" />
       </configuration>
     </facet>
     <facet type="android" name="Android">
@@ -89,8 +89,6 @@
     </content>
     <orderEntry type="jdk" jdkName="Android API 22 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="echoprintLib" />
-    <orderEntry type="module" module-name="echoprintLib" />
     <orderEntry type="module" module-name="echoprintLib" />
   </component>
 </module>

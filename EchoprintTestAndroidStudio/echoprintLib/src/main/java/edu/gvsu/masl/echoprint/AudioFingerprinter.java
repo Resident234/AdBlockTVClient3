@@ -56,6 +56,8 @@ import java.util.ArrayList;
 import java.net.*;
 import java.io.*;
 
+import org.jtransforms.fft.DoubleFFT_1D;
+
 /**
  * Main fingerprinting class<br>
  * This class will record audio from the microphone, generate the fingerprint code using a native library and query the data server for a match
@@ -220,10 +222,59 @@ public class AudioFingerprinter implements Runnable
 					Log.d("Fingerprinter samplesIn", "" + samplesIn);
 					// create an echoprint codegen wrapper and get the code
 					time = System.currentTimeMillis();
-					Codegen codegen = new Codegen();
-					String code = codegen.fingerprint(samplesIn);
+					//Codegen codegen = new Codegen();
+					//String code = codegen.generate(audioData, samplesIn);
 
-	    			Log.d("Fingerprinter", "Codegen created in: " + (System.currentTimeMillis() - time) + " millis");
+
+					try
+					{
+						//Initiate FFT
+						DoubleFFT_1D fft = new DoubleFFT_1D(audioData.length);
+
+						//Convert sample data from short[] to double[]
+						double[] fftSamples = new double[audioData.length];
+						for (int i = 0; i < audioData.length; i++) {
+							//IMPORTANT: We cannot simply cast the short value to double.
+							//As a double is only 2 bytes (values -32768 to 32768)
+							//We must divide by 32768 before we cast to Double.
+							fftSamples[i] = (double) audioData[i] / 32768;
+						}
+
+						//Perform fft calcs
+						fft.realForward(fftSamples);
+
+						//Convert FFT data into 20 "bands"
+						int numFrequencies = fftSamples.length / 2;
+
+						double[] spectrum = new double[numFrequencies];
+
+						for(int k = 1; k < numFrequencies; k++) {
+							spectrum[k] = Math.sqrt(Math.pow(fftSamples[k*2], 2) + Math.pow(fftSamples[k*2+1], 2));
+						}
+
+						spectrum[0] = fftSamples[0];
+
+						int NUM_BANDS = 20; //This can be any positive integer.
+						double[] bands = new double[NUM_BANDS];
+						int samplesPerBand = numFrequencies / NUM_BANDS;
+
+						for(int i = 0; i < NUM_BANDS; i++) {
+							//Add up each part
+							double total;
+							for(int j = samplesPerBand * i ; j < samplesPerBand * (i+1); j++) {
+								total += spectrum[j];
+							}
+							//Take average
+							bands[i] = total / samplesPerBand;
+						}
+					} catch (Exception e)
+					{
+
+					}
+
+
+					String code = "";
+					Log.d("Fingerprinter", "Codegen created in: " + (System.currentTimeMillis() - time) + " millis");
 	    			
 	    			/*if(code.length() == 0)
 	    			{
@@ -233,14 +284,11 @@ public class AudioFingerprinter implements Runnable
 	    			}*/
 	    			
 	    			//didGenerateFingerprintCode(code);
-	    			
-	    			// fetch data from echonest
-	    			time = System.currentTimeMillis();
 
 					Log.d("Fingerprinter", "Code: " + code);
 					Log.v("Fingerprinter", "Sending hash");
 
-					String strLocalMaxima;
+					/*String strLocalMaxima;
 					URL url = new URL("https://raw.githubusercontent.com/Resident234/AdBlockTVRestAPI/e3fa1676e7dcc6f6f276404c15d63712a8d9d9f6/local_maxima.log");
 					BufferedReader read = new BufferedReader(
 							new InputStreamReader(url.openStream()));
@@ -249,8 +297,6 @@ public class AudioFingerprinter implements Runnable
 						strLocalMaxima = i;
 					}
 					read.close();
-
-
 
 					List<String> hashes = new ArrayList<String>();
 					URL url = new URL("https://raw.githubusercontent.com/Resident234/AdBlockTVRestAPI/e3fa1676e7dcc6f6f276404c15d63712a8d9d9f6/hashes_samples.log");
@@ -271,7 +317,7 @@ public class AudioFingerprinter implements Runnable
 					JSONObject json = null;
 					json = new JSONObject();
 					json.put("hashes", strHashes);
-
+					*/
 					//HttpClient client = new DefaultHttpClient();
 					//HttpPost httppost = new HttpPost(url);
 					/*CommunicationResponse res = new CommunicationResponse();
@@ -302,12 +348,12 @@ public class AudioFingerprinter implements Runnable
 	    			HttpPost post = new HttpPost(urlstr);
 
 					// Request parameters and other properties.
-					//List<NameValuePair> params = new ArrayList<NameValuePair>(1);
-					//params.add(new BasicNameValuePair("code", code));
-					//post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+					List<NameValuePair> params = new ArrayList<NameValuePair>(1);
+					params.add(new BasicNameValuePair("code", code));
+					post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
 
-					StringEntity se = new StringEntity(json.toString());
-					post.setEntity(se);
+					//StringEntity se = new StringEntity(json.toString());
+					//post.setEntity(se);
 					post.setHeader("Content-type", "application/json");
 
 	    			// get response
