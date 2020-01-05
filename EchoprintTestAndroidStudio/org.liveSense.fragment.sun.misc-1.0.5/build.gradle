@@ -1,0 +1,2 @@
+configurations.maybeCreate("default")
+artifacts.add("default", file('org.liveSense.fragment.sun.misc-1.0.5.jar'))

@@ -31,6 +31,7 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.util.Log;
+import android.os.Environment;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -50,13 +51,16 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigInteger;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.net.*;
 import java.io.*;
 
 import org.jtransforms.fft.DoubleFFT_1D;
+import org.jtransforms.fft.DoubleFFT_2D;
 
 /**
  * Main fingerprinting class<br>
@@ -82,8 +86,8 @@ public class AudioFingerprinter implements Runnable
 	//private final String SERVER_URL = "http://api.mooma.sh/v1/song/identify?api_key=YOURMOOMASHAPIKEYHERE&code=";
     private final String SERVER_URL = "http://192.168.0.104:5000/api";
 
-	private final int FREQUENCY = 11025;
-	private final int CHANNEL = AudioFormat.CHANNEL_IN_MONO;
+	private final int FREQUENCY = 44100;
+	private final int CHANNEL = AudioFormat.CHANNEL_IN_STEREO;
 	private final int ENCODING = AudioFormat.ENCODING_PCM_16BIT;	
 	
 	private Thread thread;
@@ -204,77 +208,127 @@ public class AudioFingerprinter implements Runnable
 					long time = System.currentTimeMillis();
 					// fill audio buffer with mic data.
 					int samplesIn = 0;
-					do 
+					/** /do
 					{					
 						samplesIn += mRecordInstance.read(audioData, samplesIn, bufferSize - samplesIn);
 						
 						if(mRecordInstance.getRecordingState() == AudioRecord.RECORDSTATE_STOPPED)
 							break;
 					} 
-					while (samplesIn < bufferSize);				
+					while (samplesIn < bufferSize);/**/
 					Log.d("Fingerprinter", "Audio recorded: " + (System.currentTimeMillis() - time) + " millis");
 										
 					// see if the process was stopped.
 					if(mRecordInstance.getRecordingState() == AudioRecord.RECORDSTATE_STOPPED || (!firstRun && !this.continuous))
 						break;
 
-					Log.d("Fingerprinter audioData", "" + audioData);
-					Log.d("Fingerprinter samplesIn", "" + samplesIn);
+
+					final File soundFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/record.mp3");
+					if(soundFile.exists()) {
+						final int shortSizeInBytes = Short.SIZE / Byte.SIZE;
+						final int bufferSizeInBytes = (int) (soundFile.length() / shortSizeInBytes);
+						//final short[] audioData = new short[bufferSizeInBytes];
+
+						final InputStream inputStream = new FileInputStream(soundFile);
+						final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+						final DataInputStream dataInputStream = new DataInputStream(bufferedInputStream);
+						/*
+						int i_file = 0;
+						while (dataInputStream.available() > 0) {
+							audioData[i_file] = dataInputStream.readShort();
+							i_file++;
+						}
+						*/
+						audioData[0] = dataInputStream.readShort();
+						audioData[1] = dataInputStream.readShort();
+						audioData[2] = dataInputStream.readShort();
+						dataInputStream.close();
+					}
+
+					//Initiate FFT
+					DoubleFFT_1D fft = new DoubleFFT_1D(audioData.length);
+
+					//Convert sample data from short[] to double[]
+					double[] fftSamples = new double[audioData.length];
+					for (int i = 0; i < audioData.length; i++) {
+						//IMPORTANT: We cannot simply cast the short value to double.
+						//As a double is only 2 bytes (values -32768 to 32768)
+						//We must divide by 32768 before we cast to Double.
+						//Log.d("Fingerprinter fftSamples", ((double) audioData[i]) + "");
+						fftSamples[i] = (double) audioData[i] / 32768;
+						//Log.d("Fingerprinter fftSamples", fftSamples[i] + "");
+					}
+
+					Log.d("Fingerprinter fftSamples", Arrays.toString(fftSamples));
+
+					//Perform fft calcs
+					fft.realForward(fftSamples);
+
+					//Log.d("Fingerprinter fftSamples", Arrays.toString(fftSamples));
+
+
+
+
+					//Log.d("Fingerprinter samplesIn", "" + samplesIn);
 					// create an echoprint codegen wrapper and get the code
 					time = System.currentTimeMillis();
 					//Codegen codegen = new Codegen();
 					//String code = codegen.generate(audioData, samplesIn);
 
 
-					try
-					{
-						//Initiate FFT
-						DoubleFFT_1D fft = new DoubleFFT_1D(audioData.length);
+					int Fs = 44100;
+					int wsize = 4096;
+					double wratio = 0.5;
+					int fan_value = 15;
+					int amp_min = 10;
 
-						//Convert sample data from short[] to double[]
-						double[] fftSamples = new double[audioData.length];
-						for (int i = 0; i < audioData.length; i++) {
-							//IMPORTANT: We cannot simply cast the short value to double.
-							//As a double is only 2 bytes (values -32768 to 32768)
-							//We must divide by 32768 before we cast to Double.
-							fftSamples[i] = (double) audioData[i] / 32768;
-						}
 
-						//Perform fft calcs
-						fft.realForward(fftSamples);
+					int NFFT = wsize;
 
-						//Convert FFT data into 20 "bands"
-						int numFrequencies = fftSamples.length / 2;
+					String detrend = "detrend_none";
+					String window = "window_hanning";
+					int noverlap = (int) (wsize * wratio);
+					String pad_to = "None";
+					String sides = "default";
+					String scale_by_freq = "None";
 
-						double[] spectrum = new double[numFrequencies];
+					if (NFFT > noverlap) {
 
-						for(int k = 1; k < numFrequencies; k++) {
-							spectrum[k] = Math.sqrt(Math.pow(fftSamples[k*2], 2) + Math.pow(fftSamples[k*2+1], 2));
-						}
-
-						spectrum[0] = fftSamples[0];
-
-						int NUM_BANDS = 20; //This can be any positive integer.
-						double[] bands = new double[NUM_BANDS];
-						int samplesPerBand = numFrequencies / NUM_BANDS;
-
-						for(int i = 0; i < NUM_BANDS; i++) {
-							//Add up each part
-							double total;
-							for(int j = samplesPerBand * i ; j < samplesPerBand * (i+1); j++) {
-								total += spectrum[j];
-							}
-							//Take average
-							bands[i] = total / samplesPerBand;
-						}
-					} catch (Exception e)
-					{
-
+					} else {
+						//TODO: error
 					}
 
+					boolean same_data = true;
+					short x[] = new short[audioData.length];
+					short y[] = new short[audioData.length];
+					x = audioData;
+
+					//x = np.asarray(x)
+
+					/*
+					    Pxx, freqs, t = _spectral_helper(x, x, NFFT, Fs, detrend, window,
+        					noverlap, pad_to, sides, scale_by_freq)
+    					Pxx = Pxx.real #Needed since helper implements generically
+					 */
+
+
+					/*
+
+					//Convert FFT data into 20 "bands"
+					int numFrequencies = fftSamples.length / 2;
+
+					double[] spectrum = new double[numFrequencies];
+
+					for (int k = 1; k < numFrequencies; k++) {
+						spectrum[k] = Math.sqrt(Math.pow(fftSamples[k * 2], 2) + Math.pow(fftSamples[k * 2 + 1], 2));
+					}
+
+					spectrum[0] = fftSamples[0];
+					//Log.d("Fingerprinter fftSamples", Arrays.toString(spectrum));
+					*/
 
 					String code = "";
-					Log.d("Fingerprinter", "Codegen created in: " + (System.currentTimeMillis() - time) + " millis");
+					//Log.d("Fingerprinter", "Codegen created in: " + (System.currentTimeMillis() - time) + " millis");
 	    			
 	    			/*if(code.length() == 0)
 	    			{

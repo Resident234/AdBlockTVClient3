@@ -1,2 +1,2 @@
-include ':echoprintLib'
+include ':echoprintLib', ':JTransforms-3.1-with-dependencies1'
 include ':echoprintTest'

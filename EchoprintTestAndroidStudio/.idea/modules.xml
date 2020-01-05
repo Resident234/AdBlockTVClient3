@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/EchoprintTestAndroidStudio.iml" filepath="$PROJECT_DIR$/EchoprintTestAndroidStudio.iml" />
+      <module fileurl="file://$PROJECT_DIR$/JTransforms-3.1-with-dependencies1/JTransforms-3.1-with-dependencies1.iml" filepath="$PROJECT_DIR$/JTransforms-3.1-with-dependencies1/JTransforms-3.1-with-dependencies1.iml" />
       <module fileurl="file://$PROJECT_DIR$/echoprintLib/echoprintLib.iml" filepath="$PROJECT_DIR$/echoprintLib/echoprintLib.iml" />
       <module fileurl="file://$PROJECT_DIR$/echoprintTest/echoprintTest.iml" filepath="$PROJECT_DIR$/echoprintTest/echoprintTest.iml" />
     </modules>

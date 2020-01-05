@@ -15,3 +15,9 @@ android {
         }
     }
 }
+
+dependencies {
+    implementation project(path: ':JTransforms-3.1-with-dependencies1')
+}
+
+

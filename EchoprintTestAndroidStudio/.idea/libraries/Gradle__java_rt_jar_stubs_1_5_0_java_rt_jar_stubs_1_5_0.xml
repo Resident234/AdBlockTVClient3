@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Gradle: java-rt-jar-stubs-1.5.0.java-rt-jar-stubs-1.5.0">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/java-rt-jar-stubs-1.5.0/java-rt-jar-stubs-1.5.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
