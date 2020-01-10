@@ -62,6 +62,9 @@ import java.io.*;
 import org.jtransforms.fft.DoubleFFT_1D;
 import org.jtransforms.fft.DoubleFFT_2D;
 
+import static java.lang.Double.NaN;
+import static java.lang.Math.floor;
+
 /**
  * Main fingerprinting class<br>
  * This class will record audio from the microphone, generate the fingerprint code using a native library and query the data server for a match
@@ -242,6 +245,8 @@ public class AudioFingerprinter implements Runnable
 						audioData[0] = dataInputStream.readShort();
 						audioData[1] = dataInputStream.readShort();
 						audioData[2] = dataInputStream.readShort();
+						audioData[3] = dataInputStream.readShort();
+						audioData[4] = dataInputStream.readShort();
 						dataInputStream.close();
 					}
 
@@ -256,21 +261,63 @@ public class AudioFingerprinter implements Runnable
 						//We must divide by 32768 before we cast to Double.
 						//Log.d("Fingerprinter fftSamples", ((double) audioData[i]) + "");
 						fftSamples[i] = (double) audioData[i] / 32768;
-						//Log.d("Fingerprinter fftSamples", fftSamples[i] + "");
 					}
 
-					Log.d("Fingerprinter fftSamples", Arrays.toString(fftSamples));
+					//Log.d("Fingerprinter fftSamples", Arrays.toString(fftSamples));//661500
+					//Log.d("Fingerprinter audioData.length", audioData.length + "");
 
 					//Perform fft calcs
 					fft.realForward(fftSamples);
 
-					//Log.d("Fingerprinter fftSamples", Arrays.toString(fftSamples));
+					int subArrayLength = 340;
+					int arrayLength = (int) Math.ceil(audioData.length / subArrayLength);
+					double[][] arr2D = new double[arrayLength][subArrayLength];
+					double[][] output = new double[arrayLength][subArrayLength];
+					double[][] return_value = new double[arrayLength][subArrayLength];
+					int linearIndex = 0;
+
+					for (int arrayIndex = 0; arrayIndex < arrayLength; arrayIndex++) {
+						for (int subArrayIndex = 0; subArrayIndex < subArrayLength; subArrayIndex++) {
+                            arr2D[arrayIndex][subArrayIndex] = fftSamples[linearIndex];
+                            arr2D[arrayIndex][subArrayIndex] = 10 * Math.log10(arr2D[arrayIndex][subArrayIndex]);
+                            if (Double.isNaN(arr2D[arrayIndex][subArrayIndex])) {
+                                arr2D[arrayIndex][subArrayIndex] = 0.0;
+                            }
+							output[arrayIndex][subArrayIndex] = 0.0;
+							return_value[arrayIndex][subArrayIndex] = 0.0;
+                            //Log.d("Fingerprinter arr2D", "" + arr2D[arrayIndex][subArrayIndex]);
+                            linearIndex++;
+						}
+					}
+
+					boolean[][] struct = {{false, true, false}, {true, true, true}, {false, true, false}};
+					int PEAK_NEIGHBORHOOD_SIZE = 20;
+					int neighborhoodSizeLimit = 41;
+					int neighborhoodMiddle = (int) floor(neighborhoodSizeLimit / 2) + 1; // 21
+
+					boolean[][] neighborhood = new boolean[neighborhoodSizeLimit][neighborhoodSizeLimit];
+					int neighborhoodDelta = 0;
+					for (int rowIndex = 0; rowIndex < neighborhoodSizeLimit; rowIndex++) {
+						for (int columnIndex = 0; columnIndex < neighborhoodSizeLimit; columnIndex++) {
+							if ((columnIndex >= (neighborhoodMiddle - 1) - neighborhoodDelta) && (columnIndex <= (neighborhoodMiddle - 1) + neighborhoodDelta)) {
+								neighborhood[rowIndex][columnIndex] = true;
+							} else {
+								neighborhood[rowIndex][columnIndex] = false;
+							}
+						}
+						if (rowIndex < (neighborhoodMiddle - 1)) {
+							neighborhoodDelta++;
+						} else {
+							neighborhoodDelta--;
+						}
+						//Log.d("Fingerprinter neighborhood", Arrays.toString(neighborhood[rowIndex]));
+					}
+
+					int inputNdim = 2;
+					int[] origins = {0, 0};
 
 
-
-
-					//Log.d("Fingerprinter samplesIn", "" + samplesIn);
-					// create an echoprint codegen wrapper and get the code
+                    // create an echoprint codegen wrapper and get the code
 					time = System.currentTimeMillis();
 					//Codegen codegen = new Codegen();
 					//String code = codegen.generate(audioData, samplesIn);
@@ -312,10 +359,10 @@ public class AudioFingerprinter implements Runnable
 					 */
 
 
-					/*
+
 
 					//Convert FFT data into 20 "bands"
-					int numFrequencies = fftSamples.length / 2;
+					/*int numFrequencies = fftSamples.length / 2;
 
 					double[] spectrum = new double[numFrequencies];
 
@@ -324,7 +371,7 @@ public class AudioFingerprinter implements Runnable
 					}
 
 					spectrum[0] = fftSamples[0];
-					//Log.d("Fingerprinter fftSamples", Arrays.toString(spectrum));
+					Log.d("Fingerprinter spectrum", Arrays.toString(spectrum));
 					*/
 
 					String code = "";
